@@ -1,0 +1,32 @@
+{
+  "name": "avatar-gm",
+  "version": "1.0.0",
+  "description": "generate & composite avatar(s) using graphicsmagick",
+  "main": "index.js",
+  "keywords": [
+    "avatar",
+    "avatar splice",
+    "avatar composite",
+    "avatar generate",
+    "graphicsmagick"
+  ],
+  "engines": {
+    "node": ">= 6.9.2"
+  },
+  "homepage": "https://github.com/manerfan/avatar-gm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manerfan/avatar-gm.git"
+  },
+  "scripts": {
+    "test": "node ./test/index.js"
+  },
+  "author": "ManerFan",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.4.7",
+    "gm": "^1.23.0",
+    "mkdirp": "^0.5.1",
+    "node-uuid": "^1.4.7"
+  }
+}
