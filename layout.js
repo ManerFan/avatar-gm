@@ -2,6 +2,11 @@
  * Created by manerfan on 2017/1/17.
  */
 
+/**
+ * 头像布局
+ * rate: 每个头像相对于输出尺寸的倍率
+ * layout: 布局
+ */
 module.exports = [
     {
         rate: 1,
