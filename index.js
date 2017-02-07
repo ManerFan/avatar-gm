@@ -5,10 +5,10 @@
 const Composite = require('./composite');
 const Generator = require('./generator');
 
-module.exports.composite = (pics, size, path, name, callback) => {
-    new Composite(pics, size).composite(path, name, callback);
+module.exports.composite = (pics, output, size = 200) => {
+    return new Composite(pics, size).composite(output);
 };
 
-module.exports.generate = (out, size = 100) => {
-    return new Generator(out, size).generate();
+module.exports.generate = (output, size = 200) => {
+    return new Generator(output, size).generate();
 };

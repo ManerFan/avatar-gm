@@ -7,6 +7,7 @@ const fs = require('fs');
 const tempdir = require('os').tmpdir();
 
 const gm = require('gm');
+const request = require('request');
 const Promise = require('bluebird');
 const mkdirp = require('mkdirp');
 const uuid = require('node-uuid');
@@ -14,13 +15,11 @@ const uuid = require('node-uuid');
 const layout = require('./layout');
 
 class Composite {
-    constructor(pics = [], size = 60) {
+    constructor(pics = [], size = 200) {
         this.pics = pics;
         this.size = size;
 
-        this.path = [];
         this.middlewares = [];
-        this.bgColor = '#e3e3e3';
         this.border = this.size / 50;
 
         let sudokuNum = this.pics.length;
@@ -42,6 +41,11 @@ class Composite {
         let that = this;
         return new Promise((resolve, reject) => {
             let _size = size - 2 * this.border;
+
+            if (that.isWebAssert(pic)) {
+                pic = request(pic);
+            }
+
             gm(pic)
                 .resize(_size, _size, '!')
                 .borderColor(that.bgColor)
@@ -61,7 +65,7 @@ class Composite {
         let that = this;
         return Promise.map(pics, (pic, index) => {
             return that._resize(pic, size, path.join(dir, `${index}.png`));
-        }).then((path) => that.path = path);
+        });
     }
 
     _use(fn) {
@@ -69,27 +73,44 @@ class Composite {
         return this;
     }
 
-    _compose(callback = () => {
-    }) {
-        let len = this.middlewares.length;
-        let next = callback;
-        while (len--) {
-            next = this._mnext(len, next);
-        }
-        return next;
+    _makeDir(output) {
+        return new Promise((resolve, reject) => {
+            mkdirp(path.dirname(output), (err) => {
+                let _output = output;
+
+                if (!!err) {
+                    console.error(err);
+                    _output = path.join(tempdir, `${uuid.v1()}.png`);
+                }
+
+                resolve(_output);
+            })
+        });
     }
 
-    _mnext(i, next) {
+    _compose() {
         let that = this;
-        return (origin) => {
-            that.middlewares[i].call(that, origin, next);
-        }
+
+        return Promise.coroutine(function*(output) {
+            let _output = yield that._makeDir(output);
+
+            let pics = yield that._resizes(that.pics, that.size / that.sudoku.rate, path.dirname(_output));
+
+            that._middlewares(pics);
+
+            let out = _output, fn;
+            while (!!(fn = that.middlewares.shift())) {
+                out = yield fn(out);
+            }
+
+            return out;
+        });
     }
 
-    _middlewares() {
+    _middlewares(pics) {
         let that = this;
 
-        that._use((origin, next) => {
+        that._use((origin) => {
             return new Promise((resolve, reject) => {
                 gm(that.size, that.size, that.bgColor)
                     .write(origin, (err) => {
@@ -102,8 +123,8 @@ class Composite {
             });
         });
 
-        that.path.map((path, index) => {
-            that._use((origin, next) => {
+        pics.map((path, index) => {
+            that._use((origin) => {
                 return new Promise((resolve, reject) => {
                     gm(origin)
                         .composite(path).geometry(`+${that.size * that.sudoku.layout[index].x}+${that.size * that.sudoku.layout[index].y}`)
@@ -127,15 +148,20 @@ class Composite {
         return that;
     }
 
-    composite(outdir, name, callback = () => {
-    }) {
-        let that = this;
-        that._resizes(that.pics, that.size / that.sudoku.rate, outdir)
-            .then(() => {
-                that._middlewares()._compose((out) => callback(null, out))(path.join(outdir, name));
-            })
-            .catch((err) => console.error(err));
+    composite(output) {
+        if(!output) {
+            output = path.join(tempdir, `${uuid.v1()}.png`);
+        }
+
+        let compose = this._compose();
+
+        return compose(output);
     }
 }
+
+Composite.prototype.bgColor = '#e3e3e3';
+Composite.prototype.isWebAssert = (assert) => {
+    return /^((http(s)?|ftp):\/\/)/i.test(assert);
+};
 
 module.exports = Composite;

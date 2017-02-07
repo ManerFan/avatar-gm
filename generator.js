@@ -12,20 +12,17 @@ const mkdirp = require('mkdirp');
 const uuid = require('node-uuid');
 
 class Generate {
-    constructor(out, size = 100) {
-        this.out = out;
+    constructor(output, size = 200) {
+        this.output = output;
         this.size = size;
 
-        this.bgColor = '#e3e3e3';
-        this._subSize = 40;
-        this._border = 5;
+        if (!this.output) {
+            this.output = path.join(tempdir, `${uuid.v1()}.png`);
+        }
 
-        mkdirp(path.dirname(this.out), (err) => {
-            if (!!err) {
-                console.error(err);
-                this.out = path.join(tempdir, uuid.v1());
-            }
-        });
+        if (path.extname(this.output).length < 1) {
+            this.output = path.join(this.output, `${uuid.v1()}.png`)
+        }
     }
 
     _random() {
@@ -83,15 +80,26 @@ class Generate {
             avatar.borderColor(this.bgColor).border(this._border, this._border);
             avatar.resize(this.size, this.size, '!');
 
-            avatar.write(that.out, (err) => {
+            mkdirp(path.dirname(this.output), (err) => {
                 if (!!err) {
-                    reject(err);
-                } else {
-                    resolve(that.out);
+                    console.error(err);
+                    this.output = path.join(tempdir, `${uuid.v1()}.png`);
                 }
-            })
+
+                avatar.write(that.output, (err) => {
+                    if (!!err) {
+                        reject(err);
+                    } else {
+                        resolve(that.output);
+                    }
+                })
+            });
         });
     }
 }
+
+Generate.prototype.bgColor = '#e3e3e3';
+Generate.prototype._subSize = 40;
+Generate.prototype._border = 5;
 
 module.exports = Generate;
