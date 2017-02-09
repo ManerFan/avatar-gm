@@ -38,12 +38,17 @@ npm run test
 
 avatar-gm依赖于[GraphicsMagic](http://www.graphicsmagick.org/)，GraphicsMagic的使用见[GraphicsMagic Gm Utility](http://www.graphicsmagick.org/GraphicsMagick.html)，node组件使用见[GraphicsMagic for NodeJS](http://aheckmann.github.io/gm/docs.html).
 
+### 安装
+
+```shell
+npm install --save avatar-gm
+```
 
 
 ### 生成随机头像
 
 ```javascript
-const {generate} = require('../');
+const {generate} = require('avatar-gm');
 
 _print = (output) => console.info(output);
 
@@ -62,7 +67,7 @@ const path = require('path');
 
 const Promise = require('bluebird');
 
-const {composite} = require('../');
+const {composite} = require('avatar-gm');
 
 _print = (output) => console.info(output);
 
@@ -75,8 +80,4 @@ Promise.mapSeries(pics, (pic, index) => {
     return composite(pics.slice(0, index + 1), path.join(__dirname, 'composite', `composite${index + 1}.png`));
 }).then(_print);
 ```
-
-
-
-
 
